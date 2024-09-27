@@ -107,7 +107,12 @@ class CSP:
         None | dict[str, Any]
             A solution if any exists, otherwise None
         """
+        self.backtrack_calls = 0
+        self.backtrack_failures = 0
+
         def backtrack(assignment: dict[str, Any]) -> None | dict[str, Any]:
+            self.backtrack_calls += 1
+
             # Check if the assignment is complete
             if len(assignment) == len(self.variables):
                 return assignment
@@ -131,9 +136,13 @@ class CSP:
                     # If the result is None, remove the assignment (backtrack)
                     del assignment[var]
 
+            self.backtrack_failures += 1
             return None
 
-        return backtrack({})
+        result = backtrack({})
+        print(f"\n\nBacktrack calls: {self.backtrack_calls}")
+        print(f"Backtrack failures: {self.backtrack_failures}\n\n")
+        return result
 
     def is_consistent(self, var: str, value: Any, assignment: dict[str, Any]) -> bool:
         """Checks if the value assignment is consistent with the current assignment.

@@ -1,6 +1,5 @@
 from copy import deepcopy
 import math
-import time
 
 State = tuple[int, list[list[int | None]]]  # Tuple of player (whose turn it is), and board
 Action = tuple[int, int]  # Where to place the player's piece
@@ -8,7 +7,7 @@ Action = tuple[int, int]  # Where to place the player's piece
 class Game:
     
     def initial_state(self) -> State:
-        return (0, [[None, None, None], [None, None, None], [None, None, None]])
+        return (0, [[0, 1, 1], [0, None, None], [None, None, None]])
 
     def to_move(self, state: State) -> int:
         player_index, _ = state
@@ -77,48 +76,50 @@ class Game:
                 print('The game is a draw')
         else:
             print(f'It is P{self.to_move(state)+1}\'s turn to move')
-
-def alpha_beta_search(game: Game, state: State) -> Action | None:
+            
+def minimax_search(game: Game, state: State) -> Action | None:
     
-    player = game.to_move(state)  # Determine which player is to move
+    # Determine the player whose turn it is
+    player = game.to_move(state)
 
-    def max_value(state: State, alpha: float, beta: float) -> float:
-        if game.is_terminal(state):  # Check if the game is over
-            return game.utility(state, player)  # Return the utility value of the terminal state
+    # Function to calculate the maximum value for the MAX player
+    def max_value(state: State) -> float:
+        # If the state is terminal, return the utility value
+        if game.is_terminal(state):
+            return game.utility(state, player)
         v = -math.inf
-        for action in game.actions(state):  # Iterate over all possible actions
-            v = max(v, min_value(game.result(state, action), alpha, beta))  # Get the maximum value
-            if v >= beta:  # Beta cutoff
-                return v
-            alpha = max(alpha, v)  # Update alpha
+        # Iterate over all possible actions and calculate the minimum value for the resulting state
+        for action in game.actions(state):
+            v = max(v, min_value(game.result(state, action)))
         return v
 
-    def min_value(state: State, alpha: float, beta: float) -> float:
-        if game.is_terminal(state):  # Check if the game is over
-            return game.utility(state, player)  # Return the utility value of the terminal state
+    # Function to calculate the minimum value for the MIN player
+    def min_value(state: State) -> float:
+        # If the state is terminal, return the utility value
+        if game.is_terminal(state):
+            return game.utility(state, player)
         v = math.inf
-        for action in game.actions(state):  # Iterate over all possible actions
-            v = min(v, max_value(game.result(state, action), alpha, beta))  # Get the minimum value
-            if v <= alpha:  # Alpha cutoff
-                return v
-            beta = min(beta, v)  # Update beta
+        # Iterate over all possible actions and calculate the maximum value for the resulting state
+        for action in game.actions(state):
+            v = min(v, max_value(game.result(state, action)))
         return v
 
     best_score = -math.inf
     best_action = None
-    alpha = -math.inf
-    beta = math.inf
-    start_time = time.time()    # Start timing
-    for action in game.actions(state):  # Iterate over all possible actions
-        value = min_value(game.result(state, action), alpha, beta)  # Get the value of the action
-        if value > best_score:  # Check if this action has the best score
+    # Iterate over all possible actions to find the best one
+    for action in game.actions(state):
+        result_state = game.result(state, action)
+        # If the action results in a winning state, prioritize this move
+        if game.is_winner(result_state, player):
+            return action
+        # Calculate the value of the action using the min_value function
+        value = min_value(result_state)
+        # Update the best score and best action if the current value is better
+        if value > best_score:
             best_score = value
             best_action = action
-        alpha = max(alpha, best_score)  # Update alpha
-    end_time = time.time()  # End timing
-    print(f"[ TIME ]: Time taken for minimax to choose the first move: {end_time - start_time} seconds")  # Print the time taken
-    
-    return best_action  # Return the best action
+
+    return best_action
 
 
 
@@ -128,7 +129,7 @@ state = game.initial_state()
 game.print(state)
 while not game.is_terminal(state):
     player = game.to_move(state)
-    action = alpha_beta_search(game, state) # The player whose turn it is, is the MAX player
+    action = minimax_search(game, state) # The player whose turn it is, is the MAX player
     print(f'P{player + 1}\'s action : { action }')
     assert action is not None
     state = game.result(state, action)

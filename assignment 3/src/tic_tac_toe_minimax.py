@@ -1,5 +1,6 @@
 from copy import deepcopy
 import math
+import time
 
 State = tuple[int, list[list[int | None]]]  # Tuple of player (whose turn it is), and board
 Action = tuple[int, int]  # Where to place the player's piece
@@ -78,38 +79,39 @@ class Game:
             print(f'It is P{self.to_move(state)+1}\'s turn to move')
             
 def minimax_search(game: Game, state: State) -> Action | None:
-    
+    # Determine the player whose turn it is
     player = game.to_move(state)
 
+    # Define the max_value function to evaluate the maximum score for the MAX player
     def max_value(state: State) -> float:
-        # If the state is terminal, return the utility value for the player
         if game.is_terminal(state):
-            return game.utility(state, player)
-        v = -math.inf
-        # Iterate over all possible actions and choose the one with the maximum value
+            return game.utility(state, player)  # Return the utility if the state is terminal
+        v = -math.inf  # Initialize v to negative infinity
         for action in game.actions(state):
-            v = max(v, min_value(game.result(state, action)))
+            v = max(v, min_value(game.result(state, action)))  # Update v with the maximum value
         return v
 
+    # Define the min_value function to evaluate the minimum score for the MIN player
     def min_value(state: State) -> float:
-        # If the state is terminal, return the utility value for the player
         if game.is_terminal(state):
-            return game.utility(state, player)
-        v = math.inf
-        # Iterate over all possible actions and choose the one with the minimum value
+            return game.utility(state, player)  # Return the utility if the state is terminal
+        v = math.inf  # Initialize v to positive infinity
         for action in game.actions(state):
-            v = min(v, max_value(game.result(state, action)))
+            v = min(v, max_value(game.result(state, action)))  # Update v with the minimum value
         return v
 
-    best_score = -math.inf
-    best_action = None
-    # Evaluate all possible actions and choose the one with the best score
+    best_score = -math.inf  # Initialize the best score to negative infinity
+    best_action = None  # Initialize the best action to None
+    start_time = time.time()  # Start timing
     for action in game.actions(state):
-        value = min_value(game.result(state, action))
+        value = min_value(game.result(state, action))  # Evaluate the action using min_value
         if value > best_score:
-            best_score = value
-            best_action = action
-    return best_action
+            best_score = value  # Update the best score
+            best_action = action  # Update the best action
+    end_time = time.time()  # End timing
+    print(f"[ TIME ]: Time taken for minimax to choose the first move: {end_time - start_time} seconds")
+    
+    return best_action  # Return the best action
 
 
 
